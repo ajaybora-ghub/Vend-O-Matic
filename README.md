@@ -1,1 +1,9 @@
 # Vend-O-Matic
+
+
+# Introduction
+
+* Vend-O-Matic Application is using in-memory H2 database to store Inventory & Coins Information.
+* H2 Console URL :  http://localhost:8080/vendomatic/h2-console.
+* Swagger is provided to test the Vend-O-Matic API.
+* Swagger URL : http://localhost:8080/vendomatic/swagger-ui.html.
