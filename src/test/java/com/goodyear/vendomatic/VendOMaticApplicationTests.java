@@ -105,4 +105,28 @@ class VendOMaticApplicationTests {
     	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(204).header("x-coins", "1").header("x-inventory-remaining", "4");
     }
     
+    @Test
+    public void cannot_vend_1_beverage_which_is_out_of_stock() {
+    	CoinsJson json = new CoinsJson();
+    	json.setCoin(2);
+    	coinsService.putCoins(json);
+    	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(204).header("x-coins", "0").header("x-inventory-remaining", "3");
+    	json = new CoinsJson();
+    	json.setCoin(2);
+    	coinsService.putCoins(json);
+    	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(204).header("x-coins", "0").header("x-inventory-remaining", "2");
+    	json = new CoinsJson();
+    	json.setCoin(2);
+    	coinsService.putCoins(json);
+    	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(204).header("x-coins", "0").header("x-inventory-remaining", "1");
+    	json = new CoinsJson();
+    	json.setCoin(2);
+    	coinsService.putCoins(json);
+    	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(204).header("x-coins", "0").header("x-inventory-remaining", "0");
+    	json = new CoinsJson();
+    	json.setCoin(2);
+    	coinsService.putCoins(json);
+    	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(404).header("x-coins", "2");
+    }
+    
 }
