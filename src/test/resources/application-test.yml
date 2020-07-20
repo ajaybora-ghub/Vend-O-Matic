@@ -1,0 +1,26 @@
+spring:
+  profiles.active: some
+  application:
+    name: vendomatic
+  h2:
+    console:
+       enabled:  true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+
+vendomatic:
+  beverage:
+   brandsize: 5
+   coins: 2
+   brands: 3
+  label: 
+   coin: X-Coins
+   items: X-Inventory-Remaining
+  vending:
+   limit:
+    coin: 1
+    beverage : 1

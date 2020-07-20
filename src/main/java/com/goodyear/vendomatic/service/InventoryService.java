@@ -7,27 +7,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.goodyear.vendomatic.model.Inventory;
+import com.goodyear.vendomatic.properties.VendOMaticProperties;
 import com.goodyear.vendomatic.repo.InventoryRepo;
 
 @Service
 public class InventoryService {
 	
-	private static final int MAX_BEVERAGE_COUNT = 5;
-	
 	@Autowired
 	private InventoryRepo repo;
 	
+	@Autowired
+	private VendOMaticProperties properties;
+	
 	public void refill() {
 		final List<Inventory> inventoryList = new LinkedList<>();
-		inventoryList.add(initBeverage());
-		inventoryList.add(initBeverage());
-		inventoryList.add(initBeverage());
+		for(int i=0;i<properties.getBeverageBrands();i++) {
+			inventoryList.add(initBeverage());
+		}
 		repo.saveAll(inventoryList);
 	}
 	
 	public Inventory initBeverage() {
 		final Inventory  beverage = new Inventory();
-		beverage.setCount(MAX_BEVERAGE_COUNT);
+		beverage.setCount(properties.getBeverageBrandSize());
 		return beverage;
 	}
 	

@@ -1,10 +1,10 @@
 package com.goodyear.vendomatic.controller;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
-import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,6 +23,7 @@ import com.goodyear.vendomatic.model.Coins;
 import com.goodyear.vendomatic.model.CoinsJson;
 import com.goodyear.vendomatic.model.Inventory;
 import com.goodyear.vendomatic.model.InventoryJson;
+import com.goodyear.vendomatic.properties.VendOMaticProperties;
 import com.goodyear.vendomatic.service.CoinsService;
 import com.goodyear.vendomatic.service.InventoryService;
 
@@ -30,11 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @Slf4j
-public class VendingMachineController {
-	
-	private static final String X_COINS = "X-Coins";
-	
-	private static final String X_INVENTORY_REMAINING = "X-Inventory-Remaining";
+public class VendOMaticController {
 	
 	@Autowired
 	private CoinsService coinsService;
@@ -42,12 +39,13 @@ public class VendingMachineController {
 	@Autowired
 	private InventoryService inventoryService;
 	
-	private static final int VENDING_LIMIT = 1;
+	@Autowired
+	private VendOMaticProperties properties;
 		
 	@GetMapping(value = "/inventory", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Integer[]> getInventory() {
-		LOG.info("In getInventory()");
+		LOG.debug("In getInventory()");
 		final Integer[] inventory = inventoryService.getInventory();
 		return new ResponseEntity<Integer[]>(inventory, OK);
 	}
@@ -55,7 +53,7 @@ public class VendingMachineController {
 	@GetMapping(value = "/inventory/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Integer> getInventoryByBeverage(@PathVariable Integer id) {
-		LOG.info("In getInventoryByBeverage() with beverageid {}",id);
+		LOG.debug("In getInventoryByBeverage() with beverageid {}",id);
 		final Inventory inventory = inventoryService.getInventoryById(id);
 		if(inventory==null) {
 			return new ResponseEntity<>(BAD_REQUEST);
@@ -69,7 +67,7 @@ public class VendingMachineController {
 		if(coinsService.getCoinsValue()==0) {
 			return new ResponseEntity<>(BAD_REQUEST);
 		}
-		response.addHeader(X_COINS, String.valueOf(coinsService.getCoinsValue()));
+		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
 		coinsService.deleteCoins();
 		return new ResponseEntity<>(NO_CONTENT);
 	}
@@ -78,11 +76,11 @@ public class VendingMachineController {
 	@PutMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<String> putCoins(@RequestBody CoinsJson coinsJson,HttpServletResponse response) {
-		if(coinsJson.getCoin()>1||coinsJson.getCoin()==0) {
+		if(coinsJson.getCoin()>properties.getVendingCoinLimit()||coinsJson.getCoin()==0) {
 			return new ResponseEntity<>(BAD_REQUEST);
 		}
 		coinsService.putCoins(coinsJson);
-		response.addHeader(X_COINS, String.valueOf(coinsService.getCoinsValue()));
+		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
 		return new ResponseEntity<>(NO_CONTENT);
 	}
 	
@@ -92,22 +90,22 @@ public class VendingMachineController {
 		Coins coins = coinsService.getCoins();
 		if(coins.getCount()<2) {
 			LOG.warn("Insufficient coins {} to vend beverage {}",coins.getCount(),id);
-			response.addHeader(X_COINS, String.valueOf(coins.getCount()));
+			response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
 			return new ResponseEntity<>(FORBIDDEN);
 		}
 		Inventory inventory = inventoryService.getInventoryById(id);
 		if(inventory.getCount()==0) {
 			LOG.warn("Beverage {} is out of stock",coins.getCount(),id);
-			response.addHeader(X_COINS, String.valueOf(coins.getCount()));
+			response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
 			return new ResponseEntity<>(NOT_FOUND);
 		}
 		inventoryService.updateInventory(id);
 		inventory = inventoryService.getInventoryById(id);
-		coinsService.updateCoins();
 		InventoryJson inventoryJson = new InventoryJson();
-		inventoryJson.setQuantity(VENDING_LIMIT);
-		response.addHeader(X_INVENTORY_REMAINING, String.valueOf(inventory.getCount()));
-		response.addHeader(X_COINS, String.valueOf(coinsService.getCoinsValue()));
+		inventoryJson.setQuantity(properties.getVendingBeverageLimit());
+		response.addHeader(properties.getBeverageLabel(), String.valueOf(inventory.getCount()));
+		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()-properties.getBeverageCoins()));
+		coinsService.deleteCoins();
 		return new ResponseEntity<InventoryJson>(inventoryJson,NO_CONTENT);
 	}
 	

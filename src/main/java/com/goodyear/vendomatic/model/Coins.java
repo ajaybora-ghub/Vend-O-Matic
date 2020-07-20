@@ -11,7 +11,7 @@ import lombok.Data;
 @Entity
 @Data
 @Table(name = "Coins")
-public class Coins {
+public class Coins{
 
 	@javax.persistence.Id
 	@GeneratedValue(strategy = IDENTITY)

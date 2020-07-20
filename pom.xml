@@ -6,13 +6,13 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>2.3.1.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/> 
 	</parent>
 	<groupId>com.goodyear</groupId>
 	<artifactId>vendingmachine</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>vendingmachine</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Vend-O-Matic in GoodYear</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -62,6 +62,11 @@
 					<artifactId>junit-vintage-engine</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
