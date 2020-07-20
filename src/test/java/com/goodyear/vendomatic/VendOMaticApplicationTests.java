@@ -62,7 +62,7 @@ class VendOMaticApplicationTests {
     }
     
     @Test
-    public void can_get_inventory_info_by_beverage_4() {
+    public void cannot_get_inventory_info_by_beverage_4() {
     	 get(String.format("/inventory/4", "")).then().statusCode(400);
     }
     
@@ -127,6 +127,12 @@ class VendOMaticApplicationTests {
     	json.setCoin(2);
     	coinsService.putCoins(json);
     	given().given().when().put(String.format("/inventory/1", "")).then().statusCode(404).header("x-coins", "2");
+    }
+    
+    @Test
+    public void can_delete_coins() {
+    	given().given().contentType(ContentType.JSON).body("{\"coin\" : 1}").when().put("/").then().statusCode(204).header("x-coins", "1");
+    	given().given().delete(String.format("/", "")).then().statusCode(204).header("x-coins", "1");
     }
     
 }
