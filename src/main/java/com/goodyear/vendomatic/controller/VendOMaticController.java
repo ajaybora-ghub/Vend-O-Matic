@@ -47,28 +47,38 @@ public class VendOMaticController {
 	@ResponseBody
 	public ResponseEntity<Integer[]> getInventory() {
 		LOG.debug("In getInventory()");
-		final Integer[] inventory = inventoryService.getInventory();
-		return new ResponseEntity<Integer[]>(inventory, OK);
+		try {
+			final Integer[] inventory = inventoryService.getInventory();
+			return new ResponseEntity<Integer[]>(inventory, OK);
+		}catch(Exception e) {
+			LOG.error("Exception in getInventory {}",e);
+			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 	@GetMapping(value = "/inventory/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Integer> getInventoryByBeverage(@PathVariable Integer id) {
 		LOG.debug("In getInventoryByBeverage() with beverageid {}",id);
-		final Inventory inventory = inventoryService.getInventoryById(id);
-		if(inventory==null) {
-			return new ResponseEntity<>(BAD_REQUEST);
-		}else {
-			return new ResponseEntity<Integer>(inventory.getCount(), OK);
+		try {
+			final Inventory inventory = inventoryService.getInventoryById(id);
+			if(inventory==null) {
+				return new ResponseEntity<>(BAD_REQUEST);
+			}else {
+				return new ResponseEntity<Integer>(inventory.getCount(), OK);
+			}
+		}catch(Exception e) {
+			LOG.error("Exception in getInventoryByBeverage {} beverage {}",e,id);
+			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
 		}
 	}
 	
 	@DeleteMapping(value = "/")
 	public ResponseEntity<String> refundCoins(HttpServletResponse response) { 
-		if(coinsService.getCoinsValue()==0) {
-			return new ResponseEntity<>(BAD_REQUEST);
-		}
 		try {
+			if(coinsService.getCoinsValue()==0) {
+				return new ResponseEntity<>(BAD_REQUEST);
+			}
 			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
 			coinsService.deleteCoins();
 			return new ResponseEntity<>(NO_CONTENT);
@@ -82,10 +92,10 @@ public class VendOMaticController {
 	@PutMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<String> putCoins(@RequestBody CoinsJson coinsJson,HttpServletResponse response) {
-		if(coinsJson.getCoin()>properties.getVendingCoinLimit()||coinsJson.getCoin()==0) {
-			return new ResponseEntity<>(BAD_REQUEST);
-		}
 		try {
+			if(coinsJson.getCoin()>properties.getVendingCoinLimit()||coinsJson.getCoin()==0) {
+				return new ResponseEntity<>(BAD_REQUEST);
+			}
 			coinsService.putCoins(coinsJson);
 			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
 			return new ResponseEntity<>(NO_CONTENT);
