@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -67,9 +68,14 @@ public class VendOMaticController {
 		if(coinsService.getCoinsValue()==0) {
 			return new ResponseEntity<>(BAD_REQUEST);
 		}
-		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
-		coinsService.deleteCoins();
-		return new ResponseEntity<>(NO_CONTENT);
+		try {
+			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
+			coinsService.deleteCoins();
+			return new ResponseEntity<>(NO_CONTENT);
+		}catch(Exception e) {
+			LOG.error("Exception in refund coins {}",e);
+			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 	
@@ -79,34 +85,44 @@ public class VendOMaticController {
 		if(coinsJson.getCoin()>properties.getVendingCoinLimit()||coinsJson.getCoin()==0) {
 			return new ResponseEntity<>(BAD_REQUEST);
 		}
-		coinsService.putCoins(coinsJson);
-		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
-		return new ResponseEntity<>(NO_CONTENT);
+		try {
+			coinsService.putCoins(coinsJson);
+			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()));
+			return new ResponseEntity<>(NO_CONTENT);
+		}catch(Exception e) {
+			LOG.error("Exception in put coins {}",e);
+			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 	@PutMapping(value = "/inventory/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<InventoryJson> getBeverage(@PathVariable Integer id,HttpServletResponse response) {
-		Coins coins = coinsService.getCoins();
-		if(coins.getCount()<2) {
-			LOG.warn("Insufficient coins {} to vend beverage {}",coins.getCount(),id);
-			response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
-			return new ResponseEntity<>(FORBIDDEN);
+		try {
+			Coins coins = coinsService.getCoins();
+			if(coins.getCount()<2) {
+				LOG.warn("Insufficient coins {} to vend beverage {}",coins.getCount(),id);
+				response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
+				return new ResponseEntity<>(FORBIDDEN);
+			}
+			Inventory inventory = inventoryService.getInventoryById(id);
+			if(inventory.getCount()==0) {
+				LOG.warn("Beverage {} is out of stock",coins.getCount(),id);
+				response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
+				return new ResponseEntity<>(NOT_FOUND);
+			}
+			inventoryService.updateInventory(id);
+			inventory = inventoryService.getInventoryById(id);
+			InventoryJson inventoryJson = new InventoryJson();
+			inventoryJson.setQuantity(properties.getVendingBeverageLimit());
+			response.addHeader(properties.getBeverageLabel(), String.valueOf(inventory.getCount()));
+			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()-properties.getBeverageCoins()));
+			coinsService.deleteCoins();
+			return new ResponseEntity<InventoryJson>(inventoryJson,NO_CONTENT);
+		}catch(Exception e) {
+			LOG.error("Exception in getBeverage {}",e);
+			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
 		}
-		Inventory inventory = inventoryService.getInventoryById(id);
-		if(inventory.getCount()==0) {
-			LOG.warn("Beverage {} is out of stock",coins.getCount(),id);
-			response.addHeader(properties.getCoinLabel(), String.valueOf(coins.getCount()));
-			return new ResponseEntity<>(NOT_FOUND);
-		}
-		inventoryService.updateInventory(id);
-		inventory = inventoryService.getInventoryById(id);
-		InventoryJson inventoryJson = new InventoryJson();
-		inventoryJson.setQuantity(properties.getVendingBeverageLimit());
-		response.addHeader(properties.getBeverageLabel(), String.valueOf(inventory.getCount()));
-		response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()-properties.getBeverageCoins()));
-		coinsService.deleteCoins();
-		return new ResponseEntity<InventoryJson>(inventoryJson,NO_CONTENT);
 	}
 	
 }

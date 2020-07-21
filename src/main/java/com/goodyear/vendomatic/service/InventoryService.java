@@ -34,9 +34,13 @@ public class InventoryService {
 	}
 	
 	public Integer[] getInventory() {
-		final List<Integer> items = repo.getInventory().map(x->x).orElse(null);
-		final Integer inventory[] = items.toArray(new Integer[0]);
-		return inventory;
+		try {
+			final List<Integer> items = repo.getInventory().map(x->x).orElse(null);
+			final Integer inventory[] = items.toArray(new Integer[0]);
+			return inventory;
+		}catch(Exception e) {
+			return null;
+		}
 	}
 	
 	public Inventory getInventoryById(Integer beverageId) {
