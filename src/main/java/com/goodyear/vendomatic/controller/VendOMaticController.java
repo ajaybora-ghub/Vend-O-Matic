@@ -128,7 +128,7 @@ public class VendOMaticController {
 			response.addHeader(properties.getBeverageLabel(), String.valueOf(inventory.getCount()));
 			response.addHeader(properties.getCoinLabel(), String.valueOf(coinsService.getCoinsValue()-properties.getBeverageCoins()));
 			coinsService.deleteCoins();
-			return new ResponseEntity<InventoryJson>(inventoryJson,NO_CONTENT);
+			return new ResponseEntity<InventoryJson>(inventoryJson,OK);
 		}catch(Exception e) {
 			LOG.error("Exception in getBeverage {}",e);
 			return new ResponseEntity<>(INTERNAL_SERVER_ERROR);
